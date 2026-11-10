@@ -1,6 +1,12 @@
 # LidSleepTray
 
 [![Build (Windows)](https://github.com/francknos/LidSleepTray/actions/workflows/build.yml/badge.svg)](https://github.com/francknos/LidSleepTray/actions/workflows/build.yml)
+[![License: MIT](https://img.shields.io/github/license/francknos/LidSleepTray)](LICENSE)
+![Platform: Windows](https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?logo=windows&logoColor=white)
+![Qt 6](https://img.shields.io/badge/Qt-6-41CD52?logo=qt&logoColor=white)
+![C++17](https://img.shields.io/badge/C%2B%2B-17-00599C?logo=cplusplus&logoColor=white)
+![Last commit](https://img.shields.io/github/last-commit/francknos/LidSleepTray)
+[![Release](https://img.shields.io/github/v/release/francknos/LidSleepTray?include_prereleases)](https://github.com/francknos/LidSleepTray/releases)
 
 Petite icône dans la zone de notification Windows (Qt 6) pour :
 
