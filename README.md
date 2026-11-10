@@ -1,5 +1,7 @@
 # LidSleepTray
 
+[![Build (Windows)](https://github.com/francknos/LidSleepTray/actions/workflows/build.yml/badge.svg)](https://github.com/francknos/LidSleepTray/actions/workflows/build.yml)
+
 Petite icône dans la zone de notification Windows (Qt 6) pour :
 
 - **Clic gauche** : bloquer / autoriser la mise en veille automatique (☀️ / 🌙).
