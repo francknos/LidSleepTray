@@ -12,7 +12,7 @@ public:
     explicit PowerManager(QObject *parent = nullptr);
     ~PowerManager() override;
 
-    // Prevent automatic (idle) sleep. No admin rights needed.
+    // Prevent automatic (idle) sleep and keep the display on. No admin rights needed.
     void setSleepBlocked(bool blocked);
     bool isSleepBlocked() const { return m_blocked; }
 

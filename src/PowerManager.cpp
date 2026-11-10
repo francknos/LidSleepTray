@@ -23,7 +23,7 @@ PowerManager::~PowerManager()
 void PowerManager::setSleepBlocked(bool blocked)
 {
 #ifdef Q_OS_WIN
-    SetThreadExecutionState(blocked ? (ES_CONTINUOUS | ES_SYSTEM_REQUIRED) : ES_CONTINUOUS);
+    SetThreadExecutionState(blocked ? (ES_CONTINUOUS | ES_SYSTEM_REQUIRED | ES_DISPLAY_REQUIRED) : ES_CONTINUOUS);
 #endif
     m_blocked = blocked;
 }

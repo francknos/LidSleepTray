@@ -24,7 +24,7 @@ cmake --build build
 Prérequis : Qt 6 (Widgets), CMake ≥ 3.21, MSVC.
 
 ## Notes
-- La bascule "veille bloquée" utilise `SetThreadExecutionState` : elle empêche la veille automatique, elle ne change pas l'action du capot (c'est le rôle du panneau).
+- La bascule "veille bloquée" utilise `SetThreadExecutionState` (`ES_SYSTEM_REQUIRED` + `ES_DISPLAY_REQUIRED`) : elle empêche la veille automatique **et garde l'écran allumé**, elle ne change pas l'action du capot (c'est le rôle du panneau).
 - Certains PC gérés par stratégie de groupe interdisent la modification du plan d'alimentation.
 
 Licence MIT.
