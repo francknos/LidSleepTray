@@ -1,0 +1,50 @@
+name: Build (Windows)
+
+on:
+  push:
+    branches: [main]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ilammy/msvc-dev-cmd@v1
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.*"
+          arch: win64_msvc2022_64
+          cache: true
+
+      - name: Configure & build
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+          cmake --build build
+
+      - name: Bundle Qt runtime
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory dist/LidSleepTray | Out-Null
+          Copy-Item build/LidSleepTray.exe dist/LidSleepTray/
+          windeployqt --release --no-translations --no-system-d3d-compiler --no-opengl-sw --compiler-runtime dist/LidSleepTray/LidSleepTray.exe
+          Compress-Archive -Path dist/LidSleepTray -DestinationPath LidSleepTray-win64.zip
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LidSleepTray-win64
+          path: LidSleepTray-win64.zip
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: LidSleepTray-win64.zip
