@@ -17,7 +17,8 @@ OutputBaseFilename=LidSleepTray-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
-UninstallDisplayIcon={app}\LidSleepTray.exe
+SetupIconFile=..\assets\setup.ico
+UninstallDisplayIcon={app}\uninstall.ico
 CloseApplications=yes
 RestartApplications=no
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -32,6 +33,7 @@ Name: "desktopicon"; Description: "Créer un raccourci sur le Bureau"; Flags: un
 
 [Files]
 Source: "..\dist\LidSleepTray\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
+Source: "..\assets\uninstall.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\LidSleepTray"; Filename: "{app}\LidSleepTray.exe"
