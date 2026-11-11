@@ -45,6 +45,7 @@ TrayApp::TrayApp(QObject *parent)
 
     m_popup->setAutostart(PowerManager::autostartEnabled());
     applyConfig();
+    restoreSleepState();
     refreshUi();
     m_tray->show();
 
@@ -57,6 +58,7 @@ TrayApp::TrayApp(QObject *parent)
 void TrayApp::onActivated(QSystemTrayIcon::ActivationReason reason)
 {
     if (reason == QSystemTrayIcon::Trigger) {
+        pollPower();
         setBlocked(!m_blocked);
     } else if (reason == QSystemTrayIcon::Context) {
         m_popup->showNearTray();
@@ -65,9 +67,20 @@ void TrayApp::onActivated(QSystemTrayIcon::ActivationReason reason)
 
 void TrayApp::setBlocked(bool blocked)
 {
+    pollPower();
     m_blocked = blocked;
     m_power.setSleepBlocked(blocked);
+    m_settings.setValue(m_onAc ? "acSleepBlocked" : "dcSleepBlocked", blocked);
+    m_settings.sync();
     refreshUi();
+    if (m_settings.status() != QSettings::NoError)
+        m_popup->setStatus(tr("Impossible de sauvegarder l'état du blocage de la veille."));
+}
+
+void TrayApp::restoreSleepState()
+{
+    m_blocked = m_settings.value(m_onAc ? "acSleepBlocked" : "dcSleepBlocked", false).toBool();
+    m_power.setSleepBlocked(m_blocked);
 }
 
 void TrayApp::pollPower()
@@ -76,6 +89,7 @@ void TrayApp::pollPower()
     if (onAc != m_onAc) {
         m_onAc = onAc;
         applyConfig();
+        restoreSleepState();
         refreshUi();
     }
 }

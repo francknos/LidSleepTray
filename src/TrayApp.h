@@ -20,6 +20,7 @@ private slots:
 
 private:
     void setBlocked(bool blocked);
+    void restoreSleepState();
     void applyConfig();
     void refreshUi();
     void restoreOriginal();

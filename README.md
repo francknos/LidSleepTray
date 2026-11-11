@@ -11,6 +11,9 @@
 Petite icône dans la zone de notification Windows (Qt 6) pour :
 
 - **Clic gauche** : bloquer / autoriser la mise en veille automatique (☀️ / 🌙).
+  Cet état est mémorisé séparément **sur secteur** et **sur batterie**, puis rétabli
+  automatiquement lors d'un changement d'alimentation et au prochain lancement.
+  Par défaut, la veille reste autorisée pour chaque alimentation.
 - **Clic droit** : ouvrir un petit panneau pour choisir l'action à la **fermeture du capot**
   (*Ne rien faire* ou *Veille*), séparément **sur secteur** et **sur batterie**.
   Les choix sont mémorisés et l'application bascule d'une configuration à l'autre

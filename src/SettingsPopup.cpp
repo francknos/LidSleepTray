@@ -19,6 +19,7 @@ static const char *kStyle = R"(
 #card { background: #1b1f2a; border: 1px solid #2c3347; border-radius: 16px; }
 QLabel { color: #e6e9f2; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
 #title { font-size: 15px; font-weight: 600; }
+#credit { color: #8b93a7; font-size: 12px; font-weight: 300; }
 #muted { color: #8b93a7; font-size: 12px; }
 #sectionTitle { font-weight: 600; }
 #badge { background: #1f3a2e; color: #4ade80; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
@@ -62,9 +63,16 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     lay->setContentsMargins(16, 16, 16, 14);
     lay->setSpacing(10);
 
+    auto *titleRow = new QHBoxLayout;
+    titleRow->setSpacing(8);
     auto *title = new QLabel(tr("LidSleepTray"), card);
     title->setObjectName("title");
-    lay->addWidget(title);
+    titleRow->addWidget(title, 0, Qt::AlignBaseline);
+    auto *credit = new QLabel(tr("design by Franck"), card);
+    credit->setObjectName("credit");
+    titleRow->addWidget(credit, 0, Qt::AlignBaseline);
+    titleRow->addStretch();
+    lay->addLayout(titleRow);
 
     m_toggle = new QPushButton(card);
     m_toggle->setObjectName("toggle");
