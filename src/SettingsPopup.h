@@ -3,6 +3,7 @@
 
 class QPushButton;
 class QLabel;
+class ToggleSwitch;
 
 // Small modern flyout shown on right-click of the tray icon.
 class SettingsPopup : public QWidget
@@ -39,7 +40,7 @@ private:
 
     QPushButton *m_toggle = nullptr;
     QLabel *m_toggleHint = nullptr;
-    QPushButton *m_autostart = nullptr;
+    ToggleSwitch *m_autostart = nullptr;
     QLabel *m_status = nullptr;
     Section m_ac;
     Section m_dc;

@@ -13,6 +13,8 @@
 #include <QScreen>
 #include <QVBoxLayout>
 
+#include "ToggleSwitch.h"
+
 static const char *kStyle = R"(
 #card { background: #1b1f2a; border: 1px solid #2c3347; border-radius: 16px; }
 QLabel { color: #e6e9f2; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
@@ -31,8 +33,6 @@ QPushButton#segRight { border-top-right-radius: 8px; border-bottom-right-radius:
 QPushButton#toggle { background: #2b3245; color: #e6e9f2; border-radius: 12px; padding: 12px; text-align: left; font-size: 14px; font-weight: 600; }
 QPushButton#toggle:hover { background: #343c53; }
 QPushButton#toggle:checked { background: #16a34a; color: white; }
-QPushButton#check { background: transparent; color: #e6e9f2; text-align: left; padding: 6px 2px; }
-QPushButton#check:hover { color: white; }
 QPushButton#link { background: transparent; color: #8b93a7; text-align: left; padding: 4px 2px; font-size: 12px; }
 QPushButton#link:hover { color: #e6e9f2; }
 QPushButton#quit { background: #2b3245; color: #fca5a5; border-radius: 10px; padding: 8px; }
@@ -90,11 +90,13 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     m_status->hide();
     lay->addWidget(m_status);
 
-    m_autostart = new QPushButton(card);
-    m_autostart->setObjectName("check");
-    m_autostart->setCheckable(true);
-    m_autostart->setCursor(Qt::PointingHandCursor);
-    lay->addWidget(m_autostart);
+    auto *autoRow = new QHBoxLayout;
+    autoRow->setContentsMargins(2, 4, 2, 4);
+    auto *autoLabel = new QLabel(tr("Lancer au démarrage de Windows"), card);
+    autoRow->addWidget(autoLabel, 1);
+    m_autostart = new ToggleSwitch(card);
+    autoRow->addWidget(m_autostart);
+    lay->addLayout(autoRow);
 
     auto *restore = new QPushButton(tr("Rétablir les réglages Windows d'origine"), card);
     restore->setObjectName("link");
@@ -110,7 +112,7 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
         setBlocked(on);
         emit sleepToggled(on);
     });
-    connect(m_autostart, &QPushButton::clicked, this, [this](bool on) {
+    connect(m_autostart, &QAbstractButton::clicked, this, [this](bool on) {
         setAutostart(on);
         emit autostartToggled(on);
     });
@@ -193,7 +195,6 @@ void SettingsPopup::setLidAction(bool ac, int action)
 void SettingsPopup::setAutostart(bool enabled)
 {
     m_autostart->setChecked(enabled);
-    m_autostart->setText((enabled ? QStringLiteral("☑  ") : QStringLiteral("☐  ")) + tr("Lancer au démarrage de Windows"));
 }
 
 void SettingsPopup::setStatus(const QString &text)

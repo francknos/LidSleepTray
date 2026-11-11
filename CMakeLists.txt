@@ -15,6 +15,8 @@ add_executable(LidSleepTray WIN32
     src/SettingsPopup.h
     src/TrayApp.cpp
     src/TrayApp.h
+    src/ToggleSwitch.cpp
+    src/ToggleSwitch.h
 )
 target_compile_definitions(LidSleepTray PRIVATE APP_VERSION="${PROJECT_VERSION}")
 target_link_libraries(LidSleepTray PRIVATE Qt6::Widgets)
