@@ -3,6 +3,7 @@
 
 class QPushButton;
 class QLabel;
+class QFrame;
 class ToggleSwitch;
 
 // Small modern flyout shown on right-click of the tray icon.
@@ -16,6 +17,7 @@ public:
     void setOnAc(bool onAc);
     void setLidAction(bool ac, int action); // 0 = do nothing, 1 = sleep
     void setAutostart(bool enabled);
+    void setPowerMode(int mode); // -1 = unsupported (hides the section)
     void setStatus(const QString &text);
     void showNearTray();
 
@@ -23,6 +25,7 @@ signals:
     void sleepToggled(bool blocked);
     void lidActionChanged(bool ac, int action);
     void autostartToggled(bool enabled);
+    void powerModeChanged(int mode);
     void restoreRequested();
     void quitRequested();
 
@@ -38,6 +41,9 @@ private:
     };
     Section makeSection(class QVBoxLayout *parent, const QString &title, bool ac);
 
+    QFrame *m_modeFrame = nullptr;
+    QLabel *m_modeSource = nullptr;
+    QPushButton *m_modeBtn[3] = {};
     QPushButton *m_toggle = nullptr;
     QLabel *m_toggleHint = nullptr;
     ToggleSwitch *m_autostart = nullptr;

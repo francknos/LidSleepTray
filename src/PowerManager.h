@@ -23,6 +23,12 @@ public:
     int lidActionRaw(bool ac) const;
     bool setLidActionRaw(bool ac, int value);
 
+    // Windows 11 "Power mode" (overlay scheme) of the current power source.
+    // 0 = best power efficiency, 1 = balanced, 2 = best performance, 3 = max performance.
+    // powerMode() returns -1 when unsupported/unreadable.
+    int powerMode() const;
+    bool setPowerMode(int mode);
+
     static bool autostartEnabled();
     static bool setAutostart(bool enabled);
 

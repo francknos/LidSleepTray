@@ -31,6 +31,13 @@ TrayApp::TrayApp(QObject *parent)
         applyConfig();
         refreshUi();
     });
+    connect(m_popup, &SettingsPopup::powerModeChanged, this, [this](int mode) {
+        if (!m_power.setPowerMode(mode))
+            m_popup->setStatus(tr("Windows a refusé le changement de mode d'alimentation."));
+        else
+            m_popup->setStatus(QString());
+        m_popup->setPowerMode(m_power.powerMode());
+    });
     connect(m_popup, &SettingsPopup::autostartToggled, this, [this](bool on) {
         if (!PowerManager::setAutostart(on)) {
             m_popup->setStatus(tr("Impossible de modifier le démarrage automatique."));
@@ -61,6 +68,8 @@ void TrayApp::onActivated(QSystemTrayIcon::ActivationReason reason)
         pollPower();
         setBlocked(!m_blocked);
     } else if (reason == QSystemTrayIcon::Context) {
+        pollPower();
+        m_popup->setPowerMode(m_power.powerMode()); // may have been changed from Windows Settings
         m_popup->showNearTray();
     }
 }
@@ -131,6 +140,7 @@ void TrayApp::refreshUi()
 {
     m_popup->setBlocked(m_blocked);
     m_popup->setOnAc(m_onAc);
+    m_popup->setPowerMode(m_power.powerMode());
     m_popup->setLidAction(true, m_acAction);
     m_popup->setLidAction(false, m_dcAction);
     m_tray->setIcon(makeIcon(m_blocked));

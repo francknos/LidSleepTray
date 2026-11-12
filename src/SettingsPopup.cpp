@@ -84,6 +84,40 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     m_toggleHint->setWordWrap(true);
     lay->addWidget(m_toggleHint);
 
+    m_modeFrame = new QFrame(card);
+    m_modeFrame->setObjectName("section");
+    auto *mv = new QVBoxLayout(m_modeFrame);
+    mv->setContentsMargins(12, 10, 12, 12);
+    mv->setSpacing(8);
+    auto *mhead = new QHBoxLayout;
+    auto *mt = new QLabel(tr("⚡  Mode d'alimentation"), m_modeFrame);
+    mt->setObjectName("sectionTitle");
+    m_modeSource = new QLabel(m_modeFrame);
+    m_modeSource->setObjectName("badge");
+    mhead->addWidget(mt);
+    mhead->addStretch();
+    mhead->addWidget(m_modeSource);
+    mv->addLayout(mhead);
+    auto *mseg = new QHBoxLayout;
+    mseg->setSpacing(1);
+    const QString labels[3] = {tr("Économie"), tr("Équilibré"), tr("Performance")};
+    const char *radii[3] = {"border-top-left-radius:8px;border-bottom-left-radius:8px;", "",
+                            "border-top-right-radius:8px;border-bottom-right-radius:8px;"};
+    for (int i = 0; i < 3; ++i) {
+        m_modeBtn[i] = new QPushButton(labels[i], m_modeFrame);
+        m_modeBtn[i]->setObjectName("seg");
+        m_modeBtn[i]->setCheckable(true);
+        m_modeBtn[i]->setCursor(Qt::PointingHandCursor);
+        m_modeBtn[i]->setStyleSheet(radii[i]);
+        mseg->addWidget(m_modeBtn[i]);
+        connect(m_modeBtn[i], &QPushButton::clicked, this, [this, i]() {
+            setPowerMode(i);
+            emit powerModeChanged(i);
+        });
+    }
+    mv->addLayout(mseg);
+    lay->addWidget(m_modeFrame);
+
     auto *capot = new QLabel(tr("À la fermeture du capot"), card);
     capot->setObjectName("muted");
     lay->addSpacing(4);
@@ -189,6 +223,7 @@ void SettingsPopup::setBlocked(bool blocked)
 
 void SettingsPopup::setOnAc(bool onAc)
 {
+    m_modeSource->setText(onAc ? tr("sur secteur") : tr("sur batterie"));
     m_ac.badge->setVisible(onAc);
     m_dc.badge->setVisible(!onAc);
 }
@@ -198,6 +233,13 @@ void SettingsPopup::setLidAction(bool ac, int action)
     Section &s = ac ? m_ac : m_dc;
     s.nothing->setChecked(action == 0);
     s.sleep->setChecked(action != 0);
+}
+
+void SettingsPopup::setPowerMode(int mode)
+{
+    m_modeFrame->setVisible(mode >= 0);
+    for (int i = 0; i < 3; ++i)
+        m_modeBtn[i]->setChecked(i == mode); // mode 3 (max) leaves all unchecked
 }
 
 void SettingsPopup::setAutostart(bool enabled)
