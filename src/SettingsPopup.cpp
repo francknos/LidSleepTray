@@ -9,6 +9,10 @@
 #include <QHBoxLayout>
 #include <QKeyEvent>
 #include <QLabel>
+#include <QIcon>
+#include <QPainter>
+#include <QPainterPath>
+#include <QPixmap>
 #include <QPushButton>
 #include <QScreen>
 #include <QVBoxLayout>
@@ -39,6 +43,62 @@ QPushButton#link:hover { color: #e6e9f2; }
 QPushButton#quit { background: #2b3245; color: #fca5a5; border-radius: 10px; padding: 8px; }
 QPushButton#quit:hover { background: #3b2a30; }
 )";
+
+// Power-mode icons drawn with QPainter (24x24 design grid): no resource files, crisp at any DPI.
+// kind: 0 = leaf (economy), 1 = half-filled circle (balanced), 2 = bolt (performance)
+static QPixmap drawModeIcon(int kind, const QColor &color, int size, qreal dpr)
+{
+    QPixmap pm(QSize(size, size) * dpr);
+    pm.setDevicePixelRatio(dpr);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.scale(size / 24.0, size / 24.0);
+    p.setBrush(color);
+    p.setPen(Qt::NoPen);
+    if (kind == 0) {
+        QPainterPath leaf;
+        leaf.moveTo(4, 20);
+        leaf.cubicTo(3, 10, 10, 4, 20, 4);
+        leaf.cubicTo(21, 14, 14, 21, 4, 20);
+        p.drawPath(leaf);
+        p.setCompositionMode(QPainter::CompositionMode_Clear); // vein
+        QPen vein(Qt::black, 1.6, Qt::SolidLine, Qt::RoundCap);
+        p.setPen(vein);
+        p.drawLine(QPointF(6.5, 17.5), QPointF(14, 10));
+    } else if (kind == 1) {
+        p.setPen(QPen(color, 2.0));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(QPointF(12, 12), 8.5, 8.5);
+        p.setPen(Qt::NoPen);
+        p.setBrush(color);
+        QPainterPath half;
+        half.moveTo(12, 3.5);
+        half.arcTo(QRectF(3.5, 3.5, 17, 17), 90, 180);
+        half.closeSubpath();
+        p.drawPath(half);
+    } else {
+        QPainterPath bolt;
+        bolt.moveTo(14, 2);
+        bolt.lineTo(5, 13);
+        bolt.lineTo(11, 13);
+        bolt.lineTo(10, 22);
+        bolt.lineTo(19, 10);
+        bolt.lineTo(13, 10);
+        bolt.closeSubpath();
+        p.drawPath(bolt);
+    }
+    return pm;
+}
+
+static QIcon modeIcon(int kind)
+{
+    QIcon ic;
+    const qreal dpr = 3; // high-res source, Qt downsamples for 100-300% scaling
+    ic.addPixmap(drawModeIcon(kind, QColor("#aeb6ca"), 18, dpr), QIcon::Normal, QIcon::Off);
+    ic.addPixmap(drawModeIcon(kind, QColor("#ffffff"), 18, dpr), QIcon::Normal, QIcon::On);
+    return ic;
+}
 
 SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
 {
@@ -107,6 +167,8 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
         m_modeBtn[i] = new QPushButton(labels[i], m_modeFrame);
         m_modeBtn[i]->setObjectName("seg");
         m_modeBtn[i]->setCheckable(true);
+        m_modeBtn[i]->setIcon(modeIcon(i));
+        m_modeBtn[i]->setIconSize(QSize(18, 18));
         m_modeBtn[i]->setCursor(Qt::PointingHandCursor);
         m_modeBtn[i]->setStyleSheet(radii[i]);
         mseg->addWidget(m_modeBtn[i]);
