@@ -105,9 +105,10 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
     setStyleSheet(kStyle);
-    setFixedWidth(330);
+    setMinimumWidth(330);
 
     auto *outer = new QVBoxLayout(this);
+    outer->setSizeConstraint(QLayout::SetFixedSize);
     outer->setContentsMargins(14, 14, 14, 14); // room for the shadow
 
     auto *card = new QFrame(this);

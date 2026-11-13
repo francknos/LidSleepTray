@@ -44,7 +44,7 @@ jobs:
           $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
           if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress; $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
           $ver = (git describe --tags --abbrev=0 2>$null) -replace '^v',''
-          if (-not $ver) { $ver = "1.0.0" }
+          if (-not $ver) { $ver = "1.1.0" }
           & $iscc "/DAppVersion=$ver" installer/LidSleepTray.iss
           Move-Item dist/LidSleepTray-Setup.exe LidSleepTray-Setup.exe
 
