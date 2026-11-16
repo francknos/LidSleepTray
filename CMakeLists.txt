@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.21)
-project(LidSleepTray VERSION 1.1.1 LANGUAGES CXX)
+project(LidSleepTray VERSION 1.2.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,4 +22,20 @@ target_compile_definitions(LidSleepTray PRIVATE APP_VERSION="${PROJECT_VERSION}"
 target_link_libraries(LidSleepTray PRIVATE Qt6::Widgets)
 if(WIN32)
     target_link_libraries(LidSleepTray PRIVATE powrprof)
+endif()
+
+option(LIDSLEEPTRAY_BUILD_TESTS "Build UI tests" OFF)
+if(LIDSLEEPTRAY_BUILD_TESTS)
+    enable_testing()
+    add_executable(SettingsPopupTest
+        tests/SettingsPopupTest.cpp
+        src/SettingsPopup.cpp
+        src/SettingsPopup.h
+        src/ToggleSwitch.cpp
+        src/ToggleSwitch.h
+    )
+    target_include_directories(SettingsPopupTest PRIVATE src)
+    target_link_libraries(SettingsPopupTest PRIVATE Qt6::Widgets)
+    add_test(NAME SettingsPopupTest COMMAND SettingsPopupTest)
+    set_tests_properties(SettingsPopupTest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
 endif()

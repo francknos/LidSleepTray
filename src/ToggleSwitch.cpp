@@ -31,7 +31,8 @@ void ToggleSwitch::paintEvent(QPaintEvent *)
     const QRectF r = QRectF(rect()).adjusted(1, 1, -1, -1);
     const qreal h = r.height();
 
-    QColor off(0x3a, 0x42, 0x59), on(0x3b, 0x82, 0xf6);
+    QColor off = m_lightTheme ? QColor("#7a879e") : QColor("#3a4259");
+    const QColor on("#3b82f6");
     auto mix = [&](int a, int b) { return int(a + (b - a) * m_pos); };
     QColor bg(mix(off.red(), on.red()), mix(off.green(), on.green()), mix(off.blue(), on.blue()));
     if (underMouse())

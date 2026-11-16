@@ -24,6 +24,13 @@ TrayApp::TrayApp(QObject *parent)
     m_onAc = m_power.isOnAcPower();
 
     m_popup = new SettingsPopup;
+    m_popup->setLightTheme(m_settings.value("lightTheme", false).toBool());
+    connect(m_popup, &SettingsPopup::themeChanged, this, [this](bool light) {
+        m_settings.setValue("lightTheme", light);
+        m_settings.sync();
+        if (m_settings.status() != QSettings::NoError)
+            m_popup->setStatus(tr("Impossible de sauvegarder le thème choisi."));
+    });
     connect(m_popup, &SettingsPopup::sleepToggled, this, &TrayApp::setBlocked);
     connect(m_popup, &SettingsPopup::lidActionChanged, this, [this](bool ac, int action) {
         (ac ? m_acAction : m_dcAction) = action;

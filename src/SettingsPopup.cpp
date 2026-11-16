@@ -19,7 +19,7 @@
 
 #include "ToggleSwitch.h"
 
-static const char *kStyle = R"(
+static const char *kDarkStyle = R"(
 #card { background: #1b1f2a; border: 1px solid #2c3347; border-radius: 16px; }
 QLabel { color: #e6e9f2; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
 #title { font-size: 15px; font-weight: 600; }
@@ -42,6 +42,33 @@ QPushButton#link { background: transparent; color: #8b93a7; text-align: left; pa
 QPushButton#link:hover { color: #e6e9f2; }
 QPushButton#quit { background: #2b3245; color: #fca5a5; border-radius: 10px; padding: 8px; }
 QPushButton#quit:hover { background: #3b2a30; }
+QPushButton#theme { background: transparent; border-radius: 8px; }
+QPushButton#theme:hover, QPushButton#theme:focus { background: #343c53; }
+)";
+
+static const char *kLightStyle = R"(
+#card { background: #f8faff; border: 1px solid #d5dce9; border-radius: 16px; }
+QLabel { color: #202a3d; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
+#title { font-size: 15px; font-weight: 600; }
+#credit { color: #59677e; font-size: 12px; font-weight: 300; }
+#muted { color: #59677e; font-size: 12px; }
+#sectionTitle { font-weight: 600; }
+#badge { background: #d7f3e1; color: #166534; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
+#status { color: #9a5800; font-size: 11px; }
+QFrame#section { background: #eaf0f9; border-radius: 12px; }
+QPushButton { font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; border: none; }
+QPushButton#seg { background: #dbe3f0; color: #33425a; padding: 7px 10px; }
+QPushButton#seg:hover { background: #cbd7e9; }
+QPushButton#seg:checked { background: #2563c7; color: white; font-weight: 600; }
+QPushButton#toggle { background: #dbe3f0; color: #202a3d; border-radius: 12px; padding: 12px; text-align: left; font-size: 14px; font-weight: 600; }
+QPushButton#toggle:hover { background: #cbd7e9; }
+QPushButton#toggle:checked { background: #16803c; color: white; }
+QPushButton#link { background: transparent; color: #59677e; text-align: left; padding: 4px 2px; font-size: 12px; }
+QPushButton#link:hover { color: #202a3d; }
+QPushButton#quit { background: #e6eaf2; color: #a12632; border-radius: 10px; padding: 8px; }
+QPushButton#quit:hover { background: #f5dce0; }
+QPushButton#theme { background: transparent; border-radius: 8px; }
+QPushButton#theme:hover, QPushButton#theme:focus { background: #dbe3f0; }
 )";
 
 // Power-mode icons drawn with QPainter (24x24 design grid): no resource files, crisp at any DPI.
@@ -91,20 +118,51 @@ static QPixmap drawModeIcon(int kind, const QColor &color, int size, qreal dpr)
     return pm;
 }
 
-static QIcon modeIcon(int kind)
+static QIcon modeIcon(int kind, bool light)
 {
     QIcon ic;
     const qreal dpr = 3; // high-res source, Qt downsamples for 100-300% scaling
-    ic.addPixmap(drawModeIcon(kind, QColor("#aeb6ca"), 18, dpr), QIcon::Normal, QIcon::Off);
+    ic.addPixmap(drawModeIcon(kind, QColor(light ? "#33425a" : "#aeb6ca"), 18, dpr), QIcon::Normal, QIcon::Off);
     ic.addPixmap(drawModeIcon(kind, QColor("#ffffff"), 18, dpr), QIcon::Normal, QIcon::On);
     return ic;
+}
+
+static QIcon themeIcon(bool light)
+{
+    const int size = 20;
+    const qreal dpr = 3;
+    QPixmap pm(QSize(size, size) * dpr);
+    pm.setDevicePixelRatio(dpr);
+    pm.fill(Qt::transparent);
+    QPainter p(&pm);
+    p.setRenderHint(QPainter::Antialiasing);
+    p.scale(size / 24.0, size / 24.0);
+    const QColor color(light ? "#33425a" : "#e6e9f2");
+    if (light) {
+        QPainterPath moon;
+        moon.addEllipse(QPointF(12, 12), 8, 8);
+        QPainterPath cut;
+        cut.addEllipse(QPointF(16, 8), 7, 7);
+        p.fillPath(moon.subtracted(cut), color);
+    } else {
+        p.setPen(QPen(color, 1.8, Qt::SolidLine, Qt::RoundCap));
+        p.setBrush(Qt::NoBrush);
+        p.drawEllipse(QPointF(12, 12), 4, 4);
+        for (int i = 0; i < 8; ++i) {
+            p.save();
+            p.translate(12, 12);
+            p.rotate(i * 45);
+            p.drawLine(QPointF(0, -7), QPointF(0, -9));
+            p.restore();
+        }
+    }
+    return QIcon(pm);
 }
 
 SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
 {
     setWindowFlags(Qt::Tool | Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
     setAttribute(Qt::WA_TranslucentBackground);
-    setStyleSheet(kStyle);
     setMinimumWidth(330);
 
     auto *outer = new QVBoxLayout(this);
@@ -133,6 +191,12 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     credit->setObjectName("credit");
     titleRow->addWidget(credit, 0, Qt::AlignBaseline);
     titleRow->addStretch();
+    m_themeButton = new QPushButton(card);
+    m_themeButton->setObjectName("theme");
+    m_themeButton->setFixedSize(30, 30);
+    m_themeButton->setIconSize(QSize(20, 20));
+    m_themeButton->setCursor(Qt::PointingHandCursor);
+    titleRow->addWidget(m_themeButton);
     lay->addLayout(titleRow);
 
     m_toggle = new QPushButton(card);
@@ -168,7 +232,7 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
         m_modeBtn[i] = new QPushButton(labels[i], m_modeFrame);
         m_modeBtn[i]->setObjectName("seg");
         m_modeBtn[i]->setCheckable(true);
-        m_modeBtn[i]->setIcon(modeIcon(i));
+        m_modeBtn[i]->setIcon(modeIcon(i, false));
         m_modeBtn[i]->setIconSize(QSize(18, 18));
         m_modeBtn[i]->setCursor(Qt::PointingHandCursor);
         m_modeBtn[i]->setStyleSheet(radii[i]);
@@ -223,9 +287,14 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     });
     connect(restore, &QPushButton::clicked, this, &SettingsPopup::restoreRequested);
     connect(quit, &QPushButton::clicked, this, &SettingsPopup::quitRequested);
+    connect(m_themeButton, &QPushButton::clicked, this, [this]() {
+        setLightTheme(!m_lightTheme);
+        emit themeChanged(m_lightTheme);
+    });
 
     setBlocked(false);
     setAutostart(false);
+    setLightTheme(false);
 }
 
 SettingsPopup::Section SettingsPopup::makeSection(QVBoxLayout *parent, const QString &title, bool ac)
@@ -314,6 +383,19 @@ void SettingsPopup::setStatus(const QString &text)
 {
     m_status->setText(text);
     m_status->setVisible(!text.isEmpty());
+}
+
+void SettingsPopup::setLightTheme(bool light)
+{
+    m_lightTheme = light;
+    setStyleSheet(light ? kLightStyle : kDarkStyle);
+    m_autostart->setLightTheme(light);
+    for (int i = 0; i < 3; ++i)
+        m_modeBtn[i]->setIcon(modeIcon(i, light));
+    m_themeButton->setIcon(themeIcon(light));
+    const QString action = light ? tr("Passer au thème sombre") : tr("Passer au thème clair");
+    m_themeButton->setToolTip(action);
+    m_themeButton->setAccessibleName(action);
 }
 
 void SettingsPopup::showNearTray()

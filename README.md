@@ -19,6 +19,8 @@ Petite icône dans la zone de notification Windows (Qt 6) pour :
   Les choix sont mémorisés et l'application bascule d'une configuration à l'autre
   quand l'ordinateur passe du secteur à la batterie (et inversement).
 - Option **Lancer au démarrage de Windows**.
+- Icône soleil / lune dans le panneau pour choisir un thème clair ou sombre. Le choix
+  est mémorisé pour les prochains lancements ; le thème sombre est utilisé par défaut.
 - Bouton pour **rétablir les réglages Windows d'origine** (sauvegardés au premier lancement).
 
 Pas de droits administrateur nécessaires : l'app modifie le plan d'alimentation de l'utilisateur
@@ -33,6 +35,13 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
 Prérequis : Qt 6 (Widgets), CMake ≥ 3.21, MSVC.
+
+Pour compiler et exécuter le test du panneau :
+```
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIDSLEEPTRAY_BUILD_TESTS=ON
+cmake --build build
+ctest --test-dir build --output-on-failure
+```
 
 ## Notes
 - La bascule "veille bloquée" utilise `SetThreadExecutionState` (`ES_SYSTEM_REQUIRED` + `ES_DISPLAY_REQUIRED`) : elle empêche la veille automatique **et garde l'écran allumé**, elle ne change pas l'action du capot (c'est le rôle du panneau).
