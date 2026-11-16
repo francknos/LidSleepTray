@@ -23,6 +23,12 @@ Petite icône dans la zone de notification Windows (Qt 6) pour :
   est mémorisé pour les prochains lancements ; le thème sombre est utilisé par défaut.
 - Bouton pour **rétablir les réglages Windows d'origine** (sauvegardés au premier lancement).
 
+## Aperçu
+
+| Thème sombre | Thème clair |
+|:--:|:--:|
+| <img src="docs/screenshots/popup-dark.png" alt="Panneau LidSleepTray en thème sombre" width="340"> | <img src="docs/screenshots/popup-light.png" alt="Panneau LidSleepTray en thème clair" width="340"> |
+
 Pas de droits administrateur nécessaires : l'app modifie le plan d'alimentation de l'utilisateur
 via l'API `PowerWriteACValueIndex` / `PowerWriteDCValueIndex` (réglage *Lid close action*).
 
@@ -42,6 +48,7 @@ cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIDSLEEPTRAY_BUILD_TESTS=ON
 cmake --build build
 ctest --test-dir build --output-on-failure
 ```
+Pour régénérer les captures du README : `build\SettingsPopupTest.exe --capture-screenshots docs\screenshots`.
 
 ## Notes
 - La bascule "veille bloquée" utilise `SetThreadExecutionState` (`ES_SYSTEM_REQUIRED` + `ES_DISPLAY_REQUIRED`) : elle empêche la veille automatique **et garde l'écran allumé**, elle ne change pas l'action du capot (c'est le rôle du panneau).

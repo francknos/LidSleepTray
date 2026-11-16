@@ -1,14 +1,49 @@
 #include "SettingsPopup.h"
 
 #include <QApplication>
+#include <QDir>
+#include <QFontDatabase>
 #include <QPushButton>
 #include <QString>
 
 #include <iostream>
 
+static int captureScreenshots(const QString &directory)
+{
+    if (!QDir().mkpath(directory))
+        return 1;
+
+    QFontDatabase::addApplicationFont("C:/Windows/Fonts/segoeui.ttf");
+    QFontDatabase::addApplicationFont("C:/Windows/Fonts/segoeuib.ttf");
+    QFontDatabase::addApplicationFont("C:/Windows/Fonts/seguiemj.ttf");
+    QFontDatabase::addApplicationFont("C:/Windows/Fonts/seguisym.ttf");
+
+    SettingsPopup popup;
+    popup.setOnAc(true);
+    popup.setLidAction(true, 1);
+    popup.setLidAction(false, 0);
+    popup.setPowerMode(1);
+    popup.adjustSize();
+    popup.show();
+    QApplication::processEvents();
+
+    if (!popup.grab().save(QDir(directory).filePath("popup-dark.png")))
+        return 2;
+
+    popup.setLightTheme(true);
+    QApplication::processEvents();
+    if (!popup.grab().save(QDir(directory).filePath("popup-light.png")))
+        return 3;
+
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    if (argc == 3 && QString::fromLocal8Bit(argv[1]) == "--capture-screenshots")
+        return captureScreenshots(QString::fromLocal8Bit(argv[2]));
+
     SettingsPopup popup;
     auto *theme = popup.findChild<QPushButton *>("theme");
     auto *toggle = popup.findChild<QPushButton *>("toggle");
