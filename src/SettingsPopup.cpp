@@ -24,6 +24,7 @@ static const char *kDarkStyle = R"(
 QLabel { color: #e6e9f2; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
 #title { font-size: 15px; font-weight: 600; }
 #credit { color: #8b93a7; font-size: 12px; font-weight: 300; }
+#version { color: #7c8799; font-size: 10px; }
 #muted { color: #8b93a7; font-size: 12px; }
 #sectionTitle { font-weight: 600; }
 #badge { background: #1f3a2e; color: #4ade80; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
@@ -51,6 +52,7 @@ static const char *kLightStyle = R"(
 QLabel { color: #202a3d; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
 #title { font-size: 15px; font-weight: 600; }
 #credit { color: #59677e; font-size: 12px; font-weight: 300; }
+#version { color: #71809a; font-size: 10px; }
 #muted { color: #59677e; font-size: 12px; }
 #sectionTitle { font-weight: 600; }
 #badge { background: #d7f3e1; color: #166534; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
@@ -276,6 +278,13 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     quit->setObjectName("quit");
     quit->setCursor(Qt::PointingHandCursor);
     lay->addWidget(quit);
+
+    auto *versionRow = new QHBoxLayout;
+    versionRow->addStretch();
+    auto *version = new QLabel(QStringLiteral("v%1").arg(QApplication::applicationVersion()), card);
+    version->setObjectName("version");
+    versionRow->addWidget(version);
+    lay->addLayout(versionRow);
 
     connect(m_toggle, &QPushButton::clicked, this, [this](bool on) {
         setBlocked(on);

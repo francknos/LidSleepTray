@@ -1,8 +1,10 @@
 #include "SettingsPopup.h"
 
 #include <QApplication>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFontDatabase>
+#include <QLabel>
 #include <QPushButton>
 #include <QString>
 
@@ -41,13 +43,16 @@ static int captureScreenshots(const QString &directory)
 int main(int argc, char **argv)
 {
     QApplication app(argc, argv);
+    QCoreApplication::setApplicationVersion(APP_VERSION);
     if (argc == 3 && QString::fromLocal8Bit(argv[1]) == "--capture-screenshots")
         return captureScreenshots(QString::fromLocal8Bit(argv[2]));
 
     SettingsPopup popup;
     auto *theme = popup.findChild<QPushButton *>("theme");
     auto *toggle = popup.findChild<QPushButton *>("toggle");
-    if (!theme || !toggle)
+    auto *version = popup.findChild<QLabel *>("version");
+    if (!theme || !toggle || !version
+        || version->text() != QStringLiteral("v%1").arg(QCoreApplication::applicationVersion()))
         return 1;
 
     int changes = 0;

@@ -49,6 +49,7 @@ cmake --build build
 ctest --test-dir build --output-on-failure
 ```
 Pour régénérer les captures du README : `build\SettingsPopupTest.exe --capture-screenshots docs\screenshots`.
+Pour régénérer l'icône Windows : `python assets\make_app_icon.py`.
 
 ## Notes
 - La bascule "veille bloquée" utilise `SetThreadExecutionState` (`ES_SYSTEM_REQUIRED` + `ES_DISPLAY_REQUIRED`) : elle empêche la veille automatique **et garde l'écran allumé**, elle ne change pas l'action du capot (c'est le rôle du panneau).

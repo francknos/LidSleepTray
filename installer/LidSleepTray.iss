@@ -1,5 +1,5 @@
 #ifndef AppVersion
-  #define AppVersion "1.2.0"
+  #define AppVersion "1.2.1"
 #endif
 
 [Setup]
@@ -18,7 +18,7 @@ Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
 SetupIconFile=..\assets\setup.ico
-UninstallDisplayIcon={app}\uninstall.ico
+UninstallDisplayIcon={app}\app.ico
 CloseApplications=yes
 RestartApplications=no
 ArchitecturesInstallIn64BitMode=x64compatible
@@ -33,7 +33,7 @@ Name: "desktopicon"; Description: "Créer un raccourci sur le Bureau"; Flags: un
 
 [Files]
 Source: "..\dist\LidSleepTray\*"; DestDir: "{app}"; Flags: recursesubdirs ignoreversion
-Source: "..\assets\uninstall.ico"; DestDir: "{app}"; Flags: ignoreversion
+Source: "..\assets\app.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{autoprograms}\LidSleepTray"; Filename: "{app}\LidSleepTray.exe"
