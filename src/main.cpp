@@ -2,8 +2,10 @@
 #include <QDir>
 #include <QLockFile>
 #include <QSystemTrayIcon>
+#include <QTimer>
 
 #include "TrayApp.h"
+#include "UpdateChecker.h"
 
 int main(int argc, char *argv[])
 {
@@ -22,5 +24,9 @@ int main(int argc, char *argv[])
         return 1;
 
     TrayApp tray;
+#ifdef Q_OS_WIN
+    UpdateChecker updater;
+    QTimer::singleShot(0, &updater, &UpdateChecker::check);
+#endif
     return app.exec();
 }

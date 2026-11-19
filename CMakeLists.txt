@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.21)
-project(LidSleepTray VERSION 1.2.1 LANGUAGES CXX)
+project(LidSleepTray VERSION 1.3.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_AUTOMOC ON)
 
-find_package(Qt6 REQUIRED COMPONENTS Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Widgets Network)
 
 add_executable(LidSleepTray WIN32
     src/main.cpp
@@ -17,9 +17,11 @@ add_executable(LidSleepTray WIN32
     src/TrayApp.h
     src/ToggleSwitch.cpp
     src/ToggleSwitch.h
+    src/UpdateChecker.cpp
+    src/UpdateChecker.h
 )
 target_compile_definitions(LidSleepTray PRIVATE APP_VERSION="${PROJECT_VERSION}")
-target_link_libraries(LidSleepTray PRIVATE Qt6::Widgets)
+target_link_libraries(LidSleepTray PRIVATE Qt6::Widgets Qt6::Network)
 if(WIN32)
     enable_language(RC)
     configure_file(assets/app.rc.in "${CMAKE_CURRENT_BINARY_DIR}/app.rc" @ONLY)
@@ -27,7 +29,7 @@ if(WIN32)
     target_link_libraries(LidSleepTray PRIVATE powrprof)
 endif()
 
-option(LIDSLEEPTRAY_BUILD_TESTS "Build UI tests" OFF)
+option(LIDSLEEPTRAY_BUILD_TESTS "Build LidSleepTray tests" OFF)
 if(LIDSLEEPTRAY_BUILD_TESTS)
     enable_testing()
     add_executable(SettingsPopupTest
@@ -42,4 +44,9 @@ if(LIDSLEEPTRAY_BUILD_TESTS)
     target_link_libraries(SettingsPopupTest PRIVATE Qt6::Widgets)
     add_test(NAME SettingsPopupTest COMMAND SettingsPopupTest)
     set_tests_properties(SettingsPopupTest PROPERTIES ENVIRONMENT "QT_QPA_PLATFORM=offscreen")
+    add_executable(UpdateCheckerTest tests/UpdateCheckerTest.cpp src/UpdateChecker.cpp src/UpdateChecker.h)
+    target_include_directories(UpdateCheckerTest PRIVATE src)
+    target_compile_definitions(UpdateCheckerTest PRIVATE APP_VERSION="${PROJECT_VERSION}")
+    target_link_libraries(UpdateCheckerTest PRIVATE Qt6::Widgets Qt6::Network)
+    add_test(NAME UpdateCheckerTest COMMAND UpdateCheckerTest)
 endif()

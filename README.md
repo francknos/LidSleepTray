@@ -35,14 +35,21 @@ via l'API `PowerWriteACValueIndex` / `PowerWriteDCValueIndex` (réglage *Lid clo
 ## Installation
 Télécharger `LidSleepTray-win64.zip` dans les *Releases* (ou l'artefact de la dernière CI), décompresser, lancer `LidSleepTray.exe`.
 
+## Mises à jour
+Au démarrage, LidSleepTray vérifie en arrière-plan les versions stables publiées sur GitHub.
+Si une version plus récente est disponible, tu peux choisir **Plus tard** ou **Télécharger et installer**.
+Dans ce dernier cas, l'application vérifie l'empreinte SHA-256 du fichier avant de lancer
+l'installateur Windows. Si tu utilises la version ZIP, l'installateur ne remplace pas
+les fichiers du dossier portable : pour rester en mode portable, récupère plutôt le nouveau ZIP.
+
 ## Compiler
 ```
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 cmake --build build
 ```
-Prérequis : Qt 6 (Widgets), CMake ≥ 3.21, MSVC.
+Prérequis : Qt 6 (Widgets et Network), CMake ≥ 3.21, MSVC.
 
-Pour compiler et exécuter le test du panneau :
+Pour compiler et exécuter les tests :
 ```
 cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DLIDSLEEPTRAY_BUILD_TESTS=ON
 cmake --build build
