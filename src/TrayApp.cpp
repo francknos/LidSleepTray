@@ -24,7 +24,14 @@ TrayApp::TrayApp(QObject *parent)
     m_onAc = m_power.isOnAcPower();
 
     m_popup = new SettingsPopup;
-    m_popup->setLightTheme(m_settings.value("lightTheme", false).toBool());
+    const bool light = m_settings.value("lightTheme", false).toBool();
+    m_popup->setLightTheme(light);
+#ifdef Q_OS_WIN
+    m_updater.setLightTheme(light);
+    connect(m_popup, &SettingsPopup::themeChanged, &m_updater, &UpdateChecker::setLightTheme);
+    connect(m_popup, &SettingsPopup::updateCheckRequested, &m_updater, [this] { m_updater.check(true); });
+    connect(&m_updater, &UpdateChecker::busyChanged, m_popup, &SettingsPopup::setUpdateBusy);
+#endif
     connect(m_popup, &SettingsPopup::themeChanged, this, [this](bool light) {
         m_settings.setValue("lightTheme", light);
         m_settings.sync();
@@ -67,6 +74,9 @@ TrayApp::TrayApp(QObject *parent)
     m_timer.setInterval(2000);
     connect(&m_timer, &QTimer::timeout, this, &TrayApp::pollPower);
     m_timer.start();
+#ifdef Q_OS_WIN
+    QTimer::singleShot(0, &m_updater, [this] { m_updater.check(); });
+#endif
 }
 
 void TrayApp::onActivated(QSystemTrayIcon::ActivationReason reason)

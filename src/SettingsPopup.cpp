@@ -17,20 +17,16 @@
 #include <QScreen>
 #include <QVBoxLayout>
 
+#include "PopupStyle.h"
 #include "ToggleSwitch.h"
 
 static const char *kDarkStyle = R"(
-#card { background: #1b1f2a; border: 1px solid #2c3347; border-radius: 16px; }
-QLabel { color: #e6e9f2; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
-#title { font-size: 15px; font-weight: 600; }
 #credit { color: #8b93a7; font-size: 12px; font-weight: 300; }
 #version { color: #7c8799; font-size: 10px; }
-#muted { color: #8b93a7; font-size: 12px; }
 #sectionTitle { font-weight: 600; }
 #badge { background: #1f3a2e; color: #4ade80; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
 #status { color: #f59e0b; font-size: 11px; }
 QFrame#section { background: #232938; border-radius: 12px; }
-QPushButton { font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; border: none; }
 QPushButton#seg { background: #2b3245; color: #aeb6ca; padding: 7px 10px; }
 QPushButton#seg:hover { background: #343c53; }
 QPushButton#seg:checked { background: #3b82f6; color: white; font-weight: 600; }
@@ -43,22 +39,15 @@ QPushButton#link { background: transparent; color: #8b93a7; text-align: left; pa
 QPushButton#link:hover { color: #e6e9f2; }
 QPushButton#quit { background: #2b3245; color: #fca5a5; border-radius: 10px; padding: 8px; }
 QPushButton#quit:hover { background: #3b2a30; }
-QPushButton#theme { background: transparent; border-radius: 8px; }
-QPushButton#theme:hover, QPushButton#theme:focus { background: #343c53; }
 )";
 
 static const char *kLightStyle = R"(
-#card { background: #f8faff; border: 1px solid #d5dce9; border-radius: 16px; }
-QLabel { color: #202a3d; font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; }
-#title { font-size: 15px; font-weight: 600; }
 #credit { color: #59677e; font-size: 12px; font-weight: 300; }
 #version { color: #71809a; font-size: 10px; }
-#muted { color: #59677e; font-size: 12px; }
 #sectionTitle { font-weight: 600; }
 #badge { background: #d7f3e1; color: #166534; border-radius: 8px; padding: 1px 8px; font-size: 11px; }
 #status { color: #9a5800; font-size: 11px; }
 QFrame#section { background: #eaf0f9; border-radius: 12px; }
-QPushButton { font-family: "Segoe UI Variable", "Segoe UI", sans-serif; font-size: 13px; border: none; }
 QPushButton#seg { background: #dbe3f0; color: #33425a; padding: 7px 10px; }
 QPushButton#seg:hover { background: #cbd7e9; }
 QPushButton#seg:checked { background: #2563c7; color: white; font-weight: 600; }
@@ -69,8 +58,6 @@ QPushButton#link { background: transparent; color: #59677e; text-align: left; pa
 QPushButton#link:hover { color: #202a3d; }
 QPushButton#quit { background: #e6eaf2; color: #a12632; border-radius: 10px; padding: 8px; }
 QPushButton#quit:hover { background: #f5dce0; }
-QPushButton#theme { background: transparent; border-radius: 8px; }
-QPushButton#theme:hover, QPushButton#theme:focus { background: #dbe3f0; }
 )";
 
 // Power-mode icons drawn with QPainter (24x24 design grid): no resource files, crisp at any DPI.
@@ -280,10 +267,21 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     lay->addWidget(quit);
 
     auto *versionRow = new QHBoxLayout;
+    versionRow->setSpacing(4);
     versionRow->addStretch();
     auto *version = new QLabel(QStringLiteral("v%1").arg(QApplication::applicationVersion()), card);
     version->setObjectName("version");
     versionRow->addWidget(version);
+    m_updateButton = new QPushButton(QStringLiteral("↻"), card);
+    m_updateButton->setObjectName("checkUpdates");
+    m_updateButton->setFixedSize(24, 24);
+    m_updateButton->setAccessibleName(tr("Vérifier les mises à jour"));
+    m_updateButton->setCursor(Qt::PointingHandCursor);
+    setUpdateBusy(false);
+#ifndef Q_OS_WIN
+    m_updateButton->hide();
+#endif
+    versionRow->addWidget(m_updateButton);
     lay->addLayout(versionRow);
 
     connect(m_toggle, &QPushButton::clicked, this, [this](bool on) {
@@ -296,6 +294,7 @@ SettingsPopup::SettingsPopup(QWidget *parent) : QWidget(parent)
     });
     connect(restore, &QPushButton::clicked, this, &SettingsPopup::restoreRequested);
     connect(quit, &QPushButton::clicked, this, &SettingsPopup::quitRequested);
+    connect(m_updateButton, &QPushButton::clicked, this, &SettingsPopup::updateCheckRequested);
     connect(m_themeButton, &QPushButton::clicked, this, [this]() {
         setLightTheme(!m_lightTheme);
         emit themeChanged(m_lightTheme);
@@ -397,7 +396,7 @@ void SettingsPopup::setStatus(const QString &text)
 void SettingsPopup::setLightTheme(bool light)
 {
     m_lightTheme = light;
-    setStyleSheet(light ? kLightStyle : kDarkStyle);
+    setStyleSheet(popupStyle(light) + QLatin1String(light ? kLightStyle : kDarkStyle));
     m_autostart->setLightTheme(light);
     for (int i = 0; i < 3; ++i)
         m_modeBtn[i]->setIcon(modeIcon(i, light));
@@ -405,6 +404,13 @@ void SettingsPopup::setLightTheme(bool light)
     const QString action = light ? tr("Passer au thème sombre") : tr("Passer au thème clair");
     m_themeButton->setToolTip(action);
     m_themeButton->setAccessibleName(action);
+}
+
+void SettingsPopup::setUpdateBusy(bool busy)
+{
+    m_updateButton->setEnabled(!busy);
+    m_updateButton->setToolTip(busy ? tr("Vérification ou mise à jour en cours…")
+                                    : m_updateButton->accessibleName());
 }
 
 void SettingsPopup::showNearTray()

@@ -19,15 +19,23 @@ public:
     };
 
     explicit UpdateChecker(QObject *parent = nullptr);
-    void check();
+    void check(bool manual = false);
+    void setLightTheme(bool light) { m_lightTheme = light; }
 
     static std::optional<Release> availableRelease(const QByteArray &json,
-                                                   const QString &installedVersion);
+                                                   const QString &installedVersion,
+                                                   bool *validResponse = nullptr);
+
+signals:
+    void busyChanged(bool busy);
 
 private:
     void offer(const Release &release);
     void download(const Release &release);
-    void showError(const QString &message);
+    void showMessage(const QString &message);
+    void setBusy(bool busy);
 
     QNetworkAccessManager m_network;
+    bool m_busy = false;
+    bool m_lightTheme = false;
 };

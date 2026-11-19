@@ -37,6 +37,7 @@ Télécharger `LidSleepTray-win64.zip` dans les *Releases* (ou l'artefact de la 
 
 ## Mises à jour
 Au démarrage, LidSleepTray vérifie en arrière-plan les versions stables publiées sur GitHub.
+Tu peux aussi lancer une vérification à tout moment avec le bouton ↻ à côté du numéro de version.
 Si une version plus récente est disponible, tu peux choisir **Plus tard** ou **Télécharger et installer**.
 Dans ce dernier cas, l'application vérifie l'empreinte SHA-256 du fichier avant de lancer
 l'installateur Windows. Si tu utilises la version ZIP, l'installateur ne remplace pas

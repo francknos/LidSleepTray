@@ -20,6 +20,7 @@ public:
     void setPowerMode(int mode); // -1 = unsupported (hides the section)
     void setStatus(const QString &text);
     void setLightTheme(bool light);
+    void setUpdateBusy(bool busy);
     void showNearTray();
 
 signals:
@@ -28,6 +29,7 @@ signals:
     void autostartToggled(bool enabled);
     void powerModeChanged(int mode);
     void themeChanged(bool light);
+    void updateCheckRequested();
     void restoreRequested();
     void quitRequested();
 
@@ -48,6 +50,7 @@ private:
     QPushButton *m_modeBtn[3] = {};
     QPushButton *m_toggle = nullptr;
     QPushButton *m_themeButton = nullptr;
+    QPushButton *m_updateButton = nullptr;
     QLabel *m_toggleHint = nullptr;
     ToggleSwitch *m_autostart = nullptr;
     QLabel *m_status = nullptr;

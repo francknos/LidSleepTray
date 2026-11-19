@@ -1,4 +1,5 @@
 #include "UpdateChecker.h"
+#include "UpdateDialog.h"
 
 #include <QCoreApplication>
 #include <QCryptographicHash>
@@ -7,12 +8,10 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
-#include <QMessageBox>
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QProgressDialog>
-#include <QPushButton>
 #include <QRegularExpression>
 #include <QTemporaryDir>
 #include <QTimer>
@@ -56,16 +55,21 @@ struct Download {
 UpdateChecker::UpdateChecker(QObject *parent) : QObject(parent) {}
 
 std::optional<UpdateChecker::Release> UpdateChecker::availableRelease(
-    const QByteArray &json, const QString &installedVersion)
+    const QByteArray &json, const QString &installedVersion, bool *validResponse)
 {
+    if (validResponse)
+        *validResponse = false;
     const QJsonObject release = QJsonDocument::fromJson(json).object();
     if (release.isEmpty()) {
         qWarning("Invalid GitHub release response");
         return std::nullopt;
     }
 
-    if (release.value("draft").toBool() || release.value("prerelease").toBool())
+    if (release.value("draft").toBool() || release.value("prerelease").toBool()) {
+        if (validResponse)
+            *validResponse = true;
         return std::nullopt;
+    }
 
     const QString tag = release.value("tag_name").toString();
     const auto current = parseVersion(installedVersion);
@@ -74,8 +78,11 @@ std::optional<UpdateChecker::Release> UpdateChecker::availableRelease(
         qWarning("Invalid LidSleepTray version in release check");
         return std::nullopt;
     }
-    if (latest <= current)
+    if (latest <= current) {
+        if (validResponse)
+            *validResponse = true;
         return std::nullopt;
+    }
 
     const QString expectedUrl = QStringLiteral(
         "https://github.com/francknos/LidSleepTray/releases/download/%1/%2")
@@ -89,6 +96,8 @@ std::optional<UpdateChecker::Release> UpdateChecker::availableRelease(
         const qint64 size = asset.value("size").toInteger();
         if (asset.value("browser_download_url").toString() == expectedUrl
             && digest.hasMatch() && size > 0 && size <= kMaxInstallerBytes) {
+            if (validResponse)
+                *validResponse = true;
             return Release{tag, QUrl(expectedUrl),
                            QByteArray::fromHex(digest.captured(1).toLatin1()), size};
         }
@@ -98,8 +107,17 @@ std::optional<UpdateChecker::Release> UpdateChecker::availableRelease(
     return std::nullopt;
 }
 
-void UpdateChecker::check()
+void UpdateChecker::setBusy(bool busy)
 {
+    m_busy = busy;
+    emit busyChanged(busy);
+}
+
+void UpdateChecker::check(bool manual)
+{
+    if (m_busy)
+        return;
+    setBusy(true);
     auto request = requestFor(QUrl(QLatin1String(kLatestRelease)), QNetworkRequest::ManualRedirectPolicy);
     request.setRawHeader("Accept", "application/vnd.github+json");
     auto *reply = m_network.get(request);
@@ -112,33 +130,45 @@ void UpdateChecker::check()
         if (reply->bytesAvailable() > kMaxMetadataBytes)
             reply->abort();
     });
-    connect(reply, &QNetworkReply::finished, this, [this, reply] {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, manual] {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError
             || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200
             || reply->bytesAvailable() > kMaxMetadataBytes) {
             qWarning() << "LidSleepTray update check failed:" << reply->errorString();
+            setBusy(false);
+            if (manual)
+                showMessage(tr("La vérification a échoué. Vérifie ta connexion Internet et réessaie."));
             return;
         }
-        if (const auto release = availableRelease(reply->readAll(), QCoreApplication::applicationVersion()))
+        bool validResponse = false;
+        const QString installed = QCoreApplication::applicationVersion();
+        if (const auto release = availableRelease(reply->readAll(), installed, &validResponse)) {
             offer(*release);
+            return;
+        }
+        setBusy(false);
+        if (manual) {
+            showMessage(validResponse
+                ? tr("LidSleepTray %1 est à jour.").arg(installed)
+                : tr("Impossible de vérifier la dernière version sur GitHub. Réessaie plus tard."));
+        }
     });
 }
 
 void UpdateChecker::offer(const Release &release)
 {
-    auto *dialog = new QMessageBox(QMessageBox::Information, tr("Mise à jour de LidSleepTray"),
+    auto *dialog = new UpdateDialog(m_lightTheme, tr("Mise à jour disponible"),
         tr("La version %1 est disponible (version installée : %2).")
-            .arg(release.tag.mid(1), QCoreApplication::applicationVersion()));
-    dialog->setInformativeText(tr("LidSleepTray se fermera à l’ouverture de l’installateur."));
-    auto *install = dialog->addButton(tr("Télécharger et installer"), QMessageBox::AcceptRole);
-    auto *later = dialog->addButton(tr("Plus tard"), QMessageBox::RejectRole);
-    dialog->setDefaultButton(install);
-    dialog->setEscapeButton(later);
+            .arg(release.tag.mid(1), QCoreApplication::applicationVersion()),
+        tr("LidSleepTray se fermera à l’ouverture de l’installateur."),
+        tr("Télécharger et installer"));
     dialog->setAttribute(Qt::WA_DeleteOnClose);
-    connect(dialog, &QMessageBox::finished, this, [this, dialog, install, release] {
-        if (dialog->clickedButton() == install)
+    connect(dialog, &QDialog::finished, this, [this, release](int result) {
+        if (result == QDialog::Accepted)
             download(release);
+        else
+            setBusy(false);
     });
     dialog->show();
 }
@@ -147,7 +177,8 @@ void UpdateChecker::download(const Release &release)
 {
     auto transfer = std::make_shared<Download>();
     if (!transfer->directory.isValid() || !transfer->file.open(QIODevice::WriteOnly | QIODevice::NewOnly)) {
-        showError(tr("Impossible de créer le fichier temporaire de l’installateur."));
+        setBusy(false);
+        showMessage(tr("Impossible de créer le fichier temporaire de l’installateur."));
         return;
     }
 
@@ -203,33 +234,34 @@ void UpdateChecker::download(const Release &release)
             [this, reply, progress, transfer, release, writeAvailable] {
         reply->deleteLater();
         progress->deleteLater();
+        setBusy(false);
         if (transfer->cancelled)
             return;
         writeAvailable();
         progress->hide();
         if (transfer->writeFailed || !transfer->file.flush()) {
-            showError(tr("Impossible d’enregistrer l’installateur. Vérifie l’espace disque disponible."));
+            showMessage(tr("Impossible d’enregistrer l’installateur. Vérifie l’espace disque disponible."));
             return;
         }
         transfer->file.close();
         const auto unverified = tr("L’installateur téléchargé n’a pas pu être vérifié. Il n’a pas été lancé.");
         if (transfer->tooLarge) {
-            showError(unverified);
+            showMessage(unverified);
             return;
         }
         if (reply->error() != QNetworkReply::NoError
             || reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt() != 200) {
             qWarning() << "Installer download failed:" << reply->errorString();
-            showError(tr("Le téléchargement a échoué. Vérifie la connexion Internet et relance LidSleepTray."));
+            showMessage(tr("Le téléchargement a échoué. Vérifie la connexion Internet et relance la vérification."));
             return;
         }
         if (transfer->received != release.size || transfer->hash.result() != release.sha256) {
-            showError(unverified);
+            showMessage(unverified);
             return;
         }
 
         if (!QProcess::startDetached(transfer->file.fileName(), {}, transfer->directory.path())) {
-            showError(tr("Windows n’a pas pu ouvrir l’installateur. Tu peux le récupérer sur GitHub."));
+            showMessage(tr("Windows n’a pas pu ouvrir l’installateur. Tu peux le récupérer sur GitHub."));
             return;
         }
         // The detached installer still needs the file after LidSleepTray exits.
@@ -238,10 +270,9 @@ void UpdateChecker::download(const Release &release)
     });
 }
 
-void UpdateChecker::showError(const QString &message)
+void UpdateChecker::showMessage(const QString &message)
 {
-    auto *dialog = new QMessageBox(QMessageBox::Warning, tr("Mise à jour de LidSleepTray"),
-                                   message, QMessageBox::Ok);
+    auto *dialog = new UpdateDialog(m_lightTheme, tr("Mises à jour de LidSleepTray"), message);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     dialog->show();
 }

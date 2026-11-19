@@ -1,10 +1,12 @@
 #include "SettingsPopup.h"
+#include "UpdateDialog.h"
 
 #include <QApplication>
 #include <QCoreApplication>
 #include <QDir>
 #include <QFontDatabase>
 #include <QLabel>
+#include <QKeyEvent>
 #include <QPushButton>
 #include <QString>
 
@@ -36,6 +38,18 @@ static int captureScreenshots(const QString &directory)
     QApplication::processEvents();
     if (!popup.grab().save(QDir(directory).filePath("popup-light.png")))
         return 3;
+
+    popup.hide();
+    for (bool light : {false, true}) {
+        UpdateDialog dialog(light, QStringLiteral("Mise à jour disponible"),
+                            QStringLiteral("La version 1.3.2 est disponible (version installée : 1.3.1)."),
+                            QStringLiteral("LidSleepTray se fermera à l’ouverture de l’installateur."),
+                            QStringLiteral("Télécharger et installer"));
+        dialog.show();
+        QApplication::processEvents();
+        if (!dialog.grab().save(QDir(directory).filePath(light ? "update-light.png" : "update-dark.png")))
+            return 4;
+    }
 
     return 0;
 }
@@ -83,6 +97,33 @@ int main(int argc, char **argv)
     popup.setLightTheme(true);
     if (changes != 2 || !popup.styleSheet().contains("#f8faff"))
         return 5;
+
+    auto *updateButton = popup.findChild<QPushButton *>("checkUpdates");
+    int checks = 0;
+    QObject::connect(&popup, &SettingsPopup::updateCheckRequested, [&] { ++checks; });
+    if (!updateButton || updateButton->accessibleName().isEmpty())
+        return 6;
+    popup.setUpdateBusy(true);
+    updateButton->click();
+    popup.setUpdateBusy(false);
+    if (checks != 0)
+        return 7;
+    updateButton->click();
+    if (checks != 1)
+        return 8;
+
+    UpdateDialog offer(true, "Mise à jour", "Une nouvelle version est disponible.", {}, "Installer");
+    auto *install = offer.findChild<QPushButton *>("updatePrimary");
+    auto *later = offer.findChild<QPushButton *>("updateSecondary");
+    offer.show();
+    QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+    QApplication::sendEvent(&offer, &enter);
+    if (!install || !later || offer.isVisible() || offer.result() != QDialog::Rejected)
+        return 9;
+    offer.show();
+    install->click();
+    if (offer.result() != QDialog::Accepted)
+        return 10;
 
     std::cout << "Theme switching passed\n";
     return 0;

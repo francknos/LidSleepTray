@@ -5,6 +5,7 @@
 #include <QTimer>
 
 #include "PowerManager.h"
+#include "UpdateChecker.h"
 
 class SettingsPopup;
 
@@ -27,6 +28,9 @@ private:
     static QIcon makeIcon(bool active);
 
     PowerManager m_power;
+#ifdef Q_OS_WIN
+    UpdateChecker m_updater;
+#endif
     QSettings m_settings;
     QSystemTrayIcon *m_tray = nullptr;
     SettingsPopup *m_popup = nullptr;

@@ -7,6 +7,10 @@
 
 int main()
 {
+    bool validResponse = true;
+    if (UpdateChecker::availableRelease("not json", "1.2.1", &validResponse) || validResponse)
+        return 1;
+
     const QByteArray hex(64, 'a');
     const QJsonObject asset{
         {"name", "LidSleepTray-Setup.exe"},
@@ -30,7 +34,8 @@ int main()
         return 1;
     }
 
-    if (parse(release, "1.10.0") || parse(release, "2.0.0")) {
+    if (UpdateChecker::availableRelease(QJsonDocument(release).toJson(), "1.10.0", &validResponse)
+        || !validResponse || parse(release, "2.0.0")) {
         std::fputs("Equal and older releases must not be offered\n", stderr);
         return 1;
     }
@@ -59,7 +64,7 @@ int main()
     wrongOrigin["browser_download_url"] = "https://example.com/LidSleepTray-Setup.exe";
     auto candidate = release;
     candidate["assets"] = QJsonArray{wrongOrigin};
-    if (parse(candidate) || UpdateChecker::availableRelease("not json", "1.2.1")) {
+    if (parse(candidate)) {
         std::fputs("Invalid metadata and off-site installers must be rejected\n", stderr);
         return 1;
     }
