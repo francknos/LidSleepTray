@@ -133,7 +133,7 @@ void UpdateChecker::offer(const Release &release)
     dialog->setInformativeText(tr("LidSleepTray se fermera à l’ouverture de l’installateur."));
     auto *install = dialog->addButton(tr("Télécharger et installer"), QMessageBox::AcceptRole);
     auto *later = dialog->addButton(tr("Plus tard"), QMessageBox::RejectRole);
-    dialog->setDefaultButton(later);
+    dialog->setDefaultButton(install);
     dialog->setEscapeButton(later);
     dialog->setAttribute(Qt::WA_DeleteOnClose);
     connect(dialog, &QMessageBox::finished, this, [this, dialog, install, release] {
